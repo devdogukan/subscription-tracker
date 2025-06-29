@@ -1,4 +1,13 @@
 import mongoose from "mongoose";
+import {
+    CURRENCY_VALUES,
+    CURRENCY,
+    FREQUENCY_VALUES,
+    FREQUENCY,
+    CATEGORY_VALUES,
+    STATUS_VALUES,
+    STATUS
+} from "../enums";
 
 const subscriptionSchema = new mongoose.Schema({
     name: {
@@ -15,16 +24,16 @@ const subscriptionSchema = new mongoose.Schema({
     },
     currency: {
         type: String,
-        enum: ['USD', 'EUR', 'GBP'],
-        default: 'USD'
+        enum: CURRENCY_VALUES,
+        default: CURRENCY.USD
     },
     frequency: {
         type: String,
-        enum: ['daily', 'weekly', 'monthly', 'yearly']
+        enum: FREQUENCY_VALUES
     },
     category: {
         type: String,
-        enum: ['sports', 'news', 'entertainment', 'lifestyle', 'technology', 'finance', 'politics', 'other'],
+        enum: CATEGORY_VALUES,
         required: true
     },
     paymentMethod: {
@@ -34,8 +43,8 @@ const subscriptionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'cancelled', 'expired'],
-        default: 'active'
+        enum: STATUS_VALUES,
+        default: STATUS.ACTIVE
     },
     startDate: {
         type: Date,
@@ -63,12 +72,12 @@ const subscriptionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 subscriptionSchema.pre('save', function (next) {
-    if(!this.renewalDate) {
+    if (!this.renewalDate) {
         const renewalPeriods = {
-            daily: 1,
-            weekly: 7,
-            monthly: 30,
-            yearly: 365
+            [FREQUENCY.DAILY]: 1,
+            [FREQUENCY.WEEKLY]: 7,
+            [FREQUENCY.MONTHLY]: 30,
+            [FREQUENCY.YEARLY]: 365
         };
 
         this.renewalDate = new Date(this.startDate);
@@ -77,7 +86,7 @@ subscriptionSchema.pre('save', function (next) {
 
     // Auto-update the status if renewal date has passed
     if (this.renewalDate < new Date()) {
-        this.status = 'expired';
+        this.status = STATUS.EXPIRED;
     }
 
     next();

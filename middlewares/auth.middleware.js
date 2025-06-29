@@ -1,7 +1,7 @@
 import { verifyToken } from '../utils/auth.utils.js';
-import { findBlacklistedToken } from '../repositories/blacklist.repository.js';
+import { isTokenBlacklisted } from '../services/blacklist.service.js';
 
-export const authenticateToken = async (req, res, next) => {
+const authenticateTokenMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1];
@@ -13,8 +13,8 @@ export const authenticateToken = async (req, res, next) => {
         }
 
         // Check if token is blacklisted
-        const blacklistedToken = await findBlacklistedToken(token);
-        if (blacklistedToken) {
+        const isBlacklisted = await isTokenBlacklisted(token);
+        if (isBlacklisted) {
             const error = new Error('Token has been invalidated');
             error.statusCode = 401;
             throw error;
@@ -29,3 +29,5 @@ export const authenticateToken = async (req, res, next) => {
         next(error);
     }
 };
+
+export default authenticateTokenMiddleware;

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { findUserByEmail, createUser } from '../repositories/user.repository.js';
 import { hashPassword, generateToken, comparePassword, verifyToken } from '../utils/auth.utils.js';
-import { addTokenToBlacklist } from '../repositories/blacklist.repository.js';
+import { blacklistToken } from './blacklist.service.js';
 
 export const createNewUser = async (userData) => {
     const session = await mongoose.startSession();
@@ -78,7 +78,7 @@ export const signOutUser = async (token) => {
         const decoded = verifyToken(token);
         
         // Add token to blacklist
-        await addTokenToBlacklist(token, decoded.exp);
+        await blacklistToken(token, decoded.exp);
 
         return { success: true };
 

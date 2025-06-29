@@ -25,7 +25,6 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/subscriptions', subscriptionRouter);
 
 app.use(errorMiddleware);
-app.use(authenticateTokenMiddleware);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Subscription Tracker API!');

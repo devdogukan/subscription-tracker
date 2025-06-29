@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import { findUserByEmail, createUser } from '../repositories/user.repository.js';
-import { hashPassword, generateToken, comparePassword, verifyToken } from '../utils/auth.utils.js';
-import { blacklistToken } from './blacklist.service.js';
+import * as userRepository from '../repositories/user.repository.js';
+import * as authUtils from '../utils/auth.utils.js';
+import * as blacklistService from './blacklist.service.js';
 
 export const createNewUser = async (userData) => {
     const session = await mongoose.startSession();
@@ -11,7 +11,7 @@ export const createNewUser = async (userData) => {
         const { name, email, password } = userData;
 
         // Check if user already exists
-        const existingUser = await findUserByEmail(email);
+        const existingUser = await userRepository.findUserByEmail(email);
         if (existingUser) {
             const error = new Error('User already exists');
             error.statusCode = 409;
@@ -19,16 +19,16 @@ export const createNewUser = async (userData) => {
         }
 
         // Hash password
-        const hashedPassword = await hashPassword(password);
+        const hashedPassword = await authUtils.hashPassword(password);
 
         // Create user
-        const newUser = await createUser(
+        const newUser = await userRepository.createUser(
             { name, email, password: hashedPassword },
             session
         );
 
         // Generate token
-        const token = generateToken(newUser._id);
+        const token = authUtils.generateToken(newUser._id);
 
         await session.commitTransaction();
         session.endSession();
@@ -48,7 +48,7 @@ export const createNewUser = async (userData) => {
 export const authenticateUser = async (userData) => {
     const { email, password } = userData;
 
-    const user = await findUserByEmail(email);
+    const user = await userRepository.findUserByEmail(email);
 
     if (!user) {
         const error = new Error('User not found');
@@ -56,7 +56,7 @@ export const authenticateUser = async (userData) => {
         throw error;
     }
 
-    const isPasswordValid = await comparePassword(password, user.password);
+    const isPasswordValid = await authUtils.comparePassword(password, user.password);
 
     if (!isPasswordValid) {
         const error = new Error('Invalid password');
@@ -64,7 +64,7 @@ export const authenticateUser = async (userData) => {
         throw error;
     }
 
-    const token = generateToken(user._id);
+    const token = authUtils.generateToken(user._id);
 
     return {
         token,
@@ -75,13 +75,92 @@ export const authenticateUser = async (userData) => {
 export const signOutUser = async (token) => {
     try {
         // Verify token is valid
-        const decoded = verifyToken(token);
+        const decoded = authUtils.verifyToken(token);
         
         // Add token to blacklist
-        await blacklistToken(token, decoded.exp);
+        await blacklistService.blacklistToken(token, decoded.exp);
 
         return { success: true };
 
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getAllUsers = async () => {
+    try {
+        const users = await userRepository.findAllUsers();
+        return users.map(user => ({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        }));
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const getUserById = async (userId) => {
+    try {
+        const user = await userRepository.findUserById(userId);
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        return {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const updateUserById = async (userId, updateData) => {
+    try {
+        const { password, ...otherData } = updateData;
+        
+        let finalUpdateData = otherData;
+        
+        if (password) {
+            finalUpdateData.password = await authUtils.hashPassword(password);
+        }
+        
+        const updatedUser = await userRepository.updateUser(userId, finalUpdateData);
+        if (!updatedUser) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        return {
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            updatedAt: updatedUser.updatedAt
+        };
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const deleteUserById = async (userId) => {
+    try {
+        const deletedUser = await userRepository.deleteUser(userId);
+        if (!deletedUser) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        return { success: true };
     } catch (error) {
         throw error;
     }

@@ -1,8 +1,8 @@
-import { createNewUser, authenticateUser, signOutUser } from '../services/user.service.js';
+import * as userService from '../services/user.service.js';
 
 export const signUp = async (req, res, next) => {
     try {
-        const result = await createNewUser(req.body);
+        const result = await userService.createNewUser(req.body);
 
         res.status(201).json({
             success: true,
@@ -17,7 +17,7 @@ export const signUp = async (req, res, next) => {
 
 export const signIn = async (req, res, next) => {
     try {
-        const result = await authenticateUser(req.body);
+        const result = await userService.authenticateUser(req.body);
 
         res.status(200).json({
             success: true,
@@ -40,7 +40,7 @@ export const signOut = async (req, res, next) => {
             throw error;
         }
 
-        await signOutUser(token);
+        await userService.signOutUser(token);
 
         res.status(200).json({
             success: true,

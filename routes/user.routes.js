@@ -1,21 +1,15 @@
 import { Router } from 'express';
+import * as userController from '../controllers/user.controller.js';
+import { authenticateTokenMiddleware } from '../middlewares/auth.middleware.js';
 
 const userRouter = Router();
 
-userRouter.get('/', (req, res) => {
-    res.send({ title: 'GET all users' });
-});
-userRouter.get('/:id', (req, res) => {
-    res.send({ title: 'GET user details' });
-});
-userRouter.post('/', (req, res) => {
-    res.send({ title: 'CREATE a new user' });
-});
-userRouter.put('/:id', (req, res) => {
-    res.send({ title: 'UPDATE user' });
-});
-userRouter.delete('/:id', (req, res) => {
-    res.send({ title: 'DELETE user' });
-});
+// Apply authentication middleware to all routes
+userRouter.use(authenticateTokenMiddleware);
+
+userRouter.get('/', userController.getAllUsers);
+userRouter.get('/:id', userController.getUser);
+userRouter.put('/:id', userController.updateUser);
+userRouter.delete('/:id', userController.deleteUser);
 
 export default userRouter;

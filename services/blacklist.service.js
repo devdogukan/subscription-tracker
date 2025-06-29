@@ -1,8 +1,8 @@
-import { addTokenToBlacklist, findBlacklistedToken, cleanupExpiredTokens } from '../repositories/blacklist.repository.js';
+import * as blacklistRepository from '../repositories/blacklist.repository.js';
 
 export const blacklistToken = async (token, expiresAt) => {
     try {
-        return await addTokenToBlacklist(token, expiresAt);
+        return await blacklistRepository.addTokenToBlacklist(token, expiresAt);
     } catch (error) {
         throw error;
     }
@@ -10,7 +10,7 @@ export const blacklistToken = async (token, expiresAt) => {
 
 export const isTokenBlacklisted = async (token) => {
     try {
-        const blacklistedToken = await findBlacklistedToken(token);
+        const blacklistedToken = await blacklistRepository.findBlacklistedToken(token);
         return blacklistedToken !== null;
     } catch (error) {
         throw error;
@@ -19,7 +19,7 @@ export const isTokenBlacklisted = async (token) => {
 
 export const cleanupExpiredBlacklistedTokens = async () => {
     try {
-        return await cleanupExpiredTokens();
+        return await blacklistRepository.cleanupExpiredTokens();
     } catch (error) {
         throw error;
     }

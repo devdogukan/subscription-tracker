@@ -1,11 +1,11 @@
 import cron from 'node-cron';
-import { cleanupExpiredBlacklistedTokens } from '../services/blacklist.service.js';
+import * as blackListService from '../services/blacklist.service.js';
 
 export const startTokenCleanupJob = () => {
     // Run cleanup every hour
     cron.schedule('0 * * * *', async () => {
         try {
-            const result = await cleanupExpiredBlacklistedTokens();
+            const result = await blackListService.cleanupExpiredBlacklistedTokens();
             console.log(`Cleaned up ${result.deletedCount} expired tokens`);
         } catch (error) {
             console.error('Error during token cleanup:', error);
@@ -15,7 +15,7 @@ export const startTokenCleanupJob = () => {
 
 export const manualTokenCleanup = async () => {
     try {
-        const result = await cleanupExpiredBlacklistedTokens();
+        const result = await blackListService.cleanupExpiredBlacklistedTokens();
         return {
             success: true,
             deletedCount: result.deletedCount

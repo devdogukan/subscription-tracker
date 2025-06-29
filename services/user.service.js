@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { findUserByEmail, createUser } from '../repositories/user.repository.js';
-import { hashPassword, generateToken, comparePassword } from '../utils/auth.utils.js';
+import { hashPassword, generateToken, comparePassword, verifyToken } from '../utils/auth.utils.js';
+import { addTokenToBlacklist } from '../repositories/blacklist.repository.js';
 
 export const createNewUser = async (userData) => {
     const session = await mongoose.startSession();
@@ -68,5 +69,20 @@ export const authenticateUser = async (userData) => {
     return {
         token,
         user
+    }
+};
+
+export const signOutUser = async (token) => {
+    try {
+        // Verify token is valid
+        const decoded = verifyToken(token);
+        
+        // Add token to blacklist
+        await addTokenToBlacklist(token, decoded.exp);
+
+        return { success: true };
+
+    } catch (error) {
+        throw error;
     }
 };

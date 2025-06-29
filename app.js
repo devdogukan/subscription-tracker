@@ -8,6 +8,7 @@ import userRouter from './routes/user.routes.js';
 import subscriptionRouter from './routes/subscription.routes.js';
 import connectToDatabase from './database/mongodb.js';
 import errorMiddleware from './middlewares/error.middleware.js';
+import { startTokenCleanupJob } from './utils/cleanup.utils.js';
 
 const app = express();
 
@@ -24,6 +25,9 @@ app.use(errorMiddleware);
 app.get('/', (req, res) => {
     res.send('Welcome to the Subscription Tracker API!');
 });
+
+// Start cleanup job
+startTokenCleanupJob();
 
 app.listen(PORT, async () => {
     console.log(`Subscription Tracker API is running on http://localhost:${PORT}`);

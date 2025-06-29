@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { findUserByEmail, createUser } from '../repositories/user.repository.js';
-import { hashPassword, generateToken } from '../utils/auth.utils.js';
+import { hashPassword, generateToken, comparePassword } from '../utils/auth.utils.js';
 
 export const createNewUser = async (userData) => {
     const session = await mongoose.startSession();
@@ -41,5 +41,32 @@ export const createNewUser = async (userData) => {
         await session.abortTransaction();
         session.endSession();
         throw error;
+    }
+};
+
+export const authenticateUser = async (userData) => {
+    const { email, password } = userData;
+
+    const user = await findUserByEmail(email);
+
+    if (!user) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password);
+
+    if (!isPasswordValid) {
+        const error = new Error('Invalid password');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const token = generateToken(user._id);
+
+    return {
+        token,
+        user
     }
 };

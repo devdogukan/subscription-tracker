@@ -1,4 +1,7 @@
-import { serve } from '@upstash/workflow';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { serve } = require('@upstash/workflow/express');
+
 import dayjs from 'dayjs';
 
 import { STATUS, REMINDER_DAYS_VALUES } from '../enums/index.js';

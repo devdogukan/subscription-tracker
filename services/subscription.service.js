@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import { workflowClient } from '../config/upstash.js';
+import { SERVER_URL } from '../config/env.js';
 import * as subscriptionRepository from '../repositories/subscription.repository.js';
 
 export const createSubscription = async (subscriptionData, userId) => {
@@ -13,10 +15,25 @@ export const createSubscription = async (subscriptionData, userId) => {
 
         const newSubscription = await subscriptionRepository.createSubscription(subscriptionWithUser, session);
 
+        const { workflowRunId } = await workflowClient.trigger({
+            url: `${SERVER_URL}/api/v1/workflows/subscription/reminder`,
+            body: {
+                subscriptionId: newSubscription.id,
+            },
+            headers: {
+                "content-type": "application/json"
+            },
+            retries: 0
+        });
+
         await session.commitTransaction();
         session.endSession();
 
-        return newSubscription;
+        return {
+            subscription: newSubscription,
+            workflowRunId
+        };
+
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
@@ -79,6 +96,40 @@ export const getAllUserSubscriptions = async (userId, requestingUserId) => {
             updatedAt: subscription.updatedAt,
             renewalDate: subscription.renewalDate
         }));
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getSubscriptionById = async (subscriptionId) => {
+    try {
+        const subscription = await subscriptionRepository.findSubscriptionById(subscriptionId);
+
+        if (!subscription) {
+            const error = new Error('Subscription not found!');
+            error.status = 404;
+            throw error;
+        }
+
+        return {
+             _id: subscription._id,
+            name: subscription.name,
+            price: subscription.price,
+            currency: subscription.currency,
+            frequency: subscription.frequency,
+            category: subscription.category,
+            paymentMethod: subscription.paymentMethod,
+            status: subscription.status,
+            startDate: subscription.startDate,
+            user: {
+                _id: subscription.user._id,
+                name: subscription.user.name,
+                email: subscription.user.email
+            },
+            createdAt: subscription.createdAt,
+            updatedAt: subscription.updatedAt,
+            renewalDate: subscription.renewalDate
+        }
     } catch (error) {
         throw error;
     }

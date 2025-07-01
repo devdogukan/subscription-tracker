@@ -7,7 +7,7 @@ import {
     CATEGORY_VALUES,
     STATUS_VALUES,
     STATUS
-} from "../enums";
+} from "../enums/index.js";
 
 const subscriptionSchema = new mongoose.Schema({
     name: {

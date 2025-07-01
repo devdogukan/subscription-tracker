@@ -1,7 +1,7 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 import * as subscriptionRepository from '../repositories/subscription.repository.js';
 
-const createSubscription = async (subscriptionData, userId) => {
+export const createSubscription = async (subscriptionData, userId) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -24,4 +24,29 @@ const createSubscription = async (subscriptionData, userId) => {
     }
 };
 
-export { createSubscription };
+export const getAllSubscriptions = async () => {
+    try {
+        const subscriptions = await subscriptionRepository.findAllSubscriptions();
+        return subscriptions.map(subscription => ({
+            _id: subscription._id,
+            name: subscription.name,
+            price: subscription.price,
+            currency: subscription.currency,
+            frequency: subscription.frequency,
+            category: subscription.category,
+            paymentMethod: subscription.paymentMethod,
+            status: subscription.status,
+            startDate: subscription.startDate,
+            user: {
+                _id: subscription.user._id,
+                name: subscription.user.name,
+                email: subscription.user.email
+            },
+            createdAt: subscription.createdAt,
+            updatedAt: subscription.updatedAt,
+            renewalDate: subscription.renewalDate
+        }));
+    } catch (error) {
+        throw error;
+    }
+}

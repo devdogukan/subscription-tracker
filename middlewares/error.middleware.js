@@ -5,8 +5,6 @@ const errorMiddleware = (err, req, res, next) => {
         error.statusCode = err.statusCode || 500;
         error.message = err.message || 'Internal Server Error';
 
-        console.error(err);
-
         // Mongose bad ObjectId
         if (err.name === 'CastError') {
             const message = 'Resource not found';

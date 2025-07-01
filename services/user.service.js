@@ -66,9 +66,17 @@ export const authenticateUser = async (userData) => {
 
     const token = authUtils.generateToken(user._id);
 
+    const resultUser = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+    }
+
     return {
         token,
-        user
+        resultUser
     }
 };
 

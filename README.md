@@ -8,14 +8,16 @@ A Node.js REST API for managing subscription services with automated renewal rem
 - 📋 **Subscription Management**: Create, read, update, delete subscriptions
 - 💰 **Multiple Currencies**: Support for USD, EUR, GBP
 - 📅 **Renewal Tracking**: Automatic calculation of renewal dates
-- 🔔 **Automated Reminders**: Workflow-based reminder system
+- 🔔 **Automated Reminders**: Workflow-based reminder system using Upstash Workflow
 - 🏷️ **Categories**: Organize subscriptions by categories (Sports, Entertainment, Technology, etc.)
 - 📊 **Status Tracking**: Active, cancelled, expired subscription states
-- 🛡️ **Security**: Rate limiting with Arcjet protection
+- 🛡️ **Security**: Rate limiting and bot protection with Arcjet
+- 🔄 **Token Management**: Automatic token blacklisting and cleanup
+- 📧 **Email Notifications**: Automated email reminders for renewals
 
 ## Tech Stack
 
-- **Runtime**: Node.js
+- **Runtime**: Node.js (ES Modules)
 - **Framework**: Express.js
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: JWT (jsonwebtoken)
@@ -24,6 +26,7 @@ A Node.js REST API for managing subscription services with automated renewal rem
 - **Email**: Nodemailer
 - **Task Scheduling**: node-cron
 - **Development**: Nodemon, ESLint
+- **Date Manipulation**: dayjs
 
 ## Installation
 
@@ -68,7 +71,13 @@ A Node.js REST API for managing subscription services with automated renewal rem
    EMAIL_PASSWORD=your-email-app-password
    ```
 
-4. **Start the application**
+4. **Configure Email**
+   Update the sender email in `/config/nodemailer.js`:
+   ```javascript
+   export const accountEmail = "your-sender-email@gmail.com";
+   ```
+
+5. **Start the application**
    ```bash
    # Development
    npm run dev
@@ -101,13 +110,10 @@ A Node.js REST API for managing subscription services with automated renewal rem
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | GET | `/api/v1/subscriptions` | Get all subscriptions | ✅ |
-| GET | `/api/v1/subscriptions/:id` | Get subscription by ID | ✅ |
 | POST | `/api/v1/subscriptions` | Create new subscription | ✅ |
-| PUT | `/api/v1/subscriptions/:id` | Update subscription | ✅ |
-| DELETE | `/api/v1/subscriptions/:id` | Delete subscription | ✅ |
 | GET | `/api/v1/subscriptions/user/:id` | Get user subscriptions | ✅ |
-| PUT | `/api/v1/subscriptions/:id/cancel` | Cancel subscription | ✅ |
-| GET | `/api/v1/subscriptions/upcoming-renewals` | Get upcoming renewals | ✅ |
+
+*Note: Additional subscription endpoints are planned for future implementation*
 
 ### Workflows
 
@@ -140,6 +146,15 @@ A Node.js REST API for managing subscription services with automated renewal rem
   startDate: Date (required),
   renewalDate: Date (auto-calculated),
   user: ObjectId (ref: User),
+  timestamps: { createdAt, updatedAt }
+}
+```
+
+### BlacklistedToken Schema
+```javascript
+{
+  token: String (required, unique),
+  expiresAt: Date (required, auto-expires),
   timestamps: { createdAt, updatedAt }
 }
 ```
@@ -177,40 +192,61 @@ curl -X POST http://localhost:3000/api/v1/subscriptions \
 
 ```
 subscription-tracker/
-├── app.js                 # Main application file
-├── package.json           # Dependencies and scripts
-├── README.md             # Project documentation
-├── config/
-│   └── env.js            # Environment configuration
-├── controllers/          # Route controllers
-│   ├── auth.controller.js
-│   ├── subscription.controller.js
-│   └── workflow.controller.js
+├── app.js                     # Main application file
+├── package.json               # Dependencies and scripts
+├── package-lock.json          # Dependency lock file
+├── README.md                  # Project documentation
+├── .gitignore                 # Git ignore rules
+├── eslint.config.js           # ESLint configuration
+├── config/                    # Configuration files
+│   ├── env.js                 # Environment configuration
+│   ├── arcjet.js              # Arcjet security config
+│   ├── nodemailer.js          # Email configuration
+│   └── upstash.js             # Upstash workflow config
+├── controllers/               # Route controllers
+│   ├── auth.controller.js     # Authentication logic
+│   ├── user.controller.js     # User management
+│   ├── subscription.controller.js # Subscription management
+│   └── workflow.controller.js # Workflow endpoints
 ├── database/
-│   └── mongodb.js        # Database connection
-├── enums/                # Application constants
-│   ├── index.js
-│   ├── category.enum.js
-│   ├── currency.enum.js
-│   ├── frequency.enum.js
-│   └── status.enum.js
-├── middlewares/          # Express middlewares
-│   ├── auth.middleware.js
-│   ├── error.middleware.js
-│   └── arcject.middleware.js
-├── models/               # Mongoose models
-│   ├── subscription.model.js
-│   └── user.model.js
-├── routes/               # Express routes
-│   ├── auth.routes.js
-│   ├── subscription.routes.js
-│   ├── user.routes.js
-│   └── workflow.routes.js
-├── services/             # Business logic
-│   ├── subscription.service.js
-│   └── user.service.js
-└── utils/                # Utility functions
-    └── cleanup.utils.js
+│   └── mongodb.js             # Database connection
+├── enums/                     # Application constants
+│   ├── index.js               # Exports all enums
+│   ├── category.enum.js       # Subscription categories
+│   ├── currency.enum.js       # Supported currencies
+│   ├── frequency.enum.js      # Billing frequencies
+│   ├── status.enum.js         # Subscription statuses
+│   └── reminders.enum.js      # Reminder configurations
+├── middlewares/               # Express middlewares
+│   ├── auth.middleware.js     # JWT authentication
+│   ├── error.middleware.js    # Error handling
+│   └── arcject.middleware.js  # Security protection
+├── models/                    # Mongoose models
+│   ├── user.model.js          # User data model
+│   ├── subscription.model.js  # Subscription data model
+│   └── blacklistedToken.model.js # Token blacklist
+├── repositories/              # Data access layer (planned)
+│   ├── user.repository.js
+│   ├── subscription.repository.js
+│   └── blacklist.repository.js
+├── routes/                    # Express routes
+│   ├── auth.routes.js         # Authentication routes
+│   ├── user.routes.js         # User management routes
+│   ├── subscription.routes.js # Subscription routes
+│   └── workflow.routes.js     # Workflow routes
+├── services/                  # Business logic layer
+│   ├── user.service.js        # User business logic
+│   ├── subscription.service.js # Subscription logic
+│   ├── blacklist.service.js   # Token blacklist logic
+│   ├── workflow.service.js    # Workflow orchestration
+│   └── workflow/              # Workflow components
+│       ├── index.js
+│       ├── workflow-client.service.js
+│       └── subscription-workflow.service.js
+└── utils/                     # Utility functions
+    ├── auth.utils.js          # Authentication utilities
+    ├── cleanup.utils.js       # Token cleanup jobs
+    └── send-email.js          # Email utilities
 ```
 
 ## Features in Detail
@@ -241,13 +277,21 @@ subscription-tracker/
 - **Cancelled**: User cancelled subscription
 - **Expired**: Subscription has expired
 
+### Reminder System
+- 1 week before renewal
+- 5 days before renewal
+- 2 days before renewal
+- 1 day before renewal
+
 ## Security Features
 
-- JWT-based authentication
+- JWT-based authentication with token blacklisting
 - Password hashing with bcryptjs
-- Rate limiting with Arcjet
+- Rate limiting and bot protection with Arcjet
 - Input validation and sanitization
 - Environment-based configuration
+- Automatic token cleanup jobs
+- Request protection against malicious activities
 
 ## Development
 
@@ -261,3 +305,25 @@ npm run dev    # Start development server with nodemon
 ```bash
 npx eslint .   # Run ESLint
 ```
+
+### Environment Configuration
+The application uses environment-specific configuration files:
+- Development: `.env.development.local`
+- Production: `.env.production.local`
+
+### Automated Tasks
+- Token cleanup job runs periodically to remove expired blacklisted tokens
+- Subscription status updates based on renewal dates
+- Automated email reminders for upcoming renewals
+
+## Architecture
+
+The application follows a layered architecture:
+
+1. **Routes**: Handle HTTP requests and responses
+2. **Controllers**: Process requests and coordinate responses
+3. **Services**: Contain business logic
+4. **Repositories**: Data access layer (planned implementation)
+5. **Models**: Define data structures and validation
+6. **Middlewares**: Handle cross-cutting concerns
+7. **Utils**: Provide utility functions

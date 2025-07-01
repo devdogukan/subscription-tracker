@@ -1,14 +1,10 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { serve } = require('@upstash/workflow/express');
-
 import dayjs from 'dayjs';
 
 import { STATUS, REMINDER_DAYS_VALUES } from '../enums/index.js';
 
 import * as subscriptionService from './subscription.service.js';
 
-export const sendReminders = serve(async (context) => {
+export const sendReminders = async (context) => {
     const { subscriptionId } = context.requestPayload;
     const subscription = await fetchSubscription(context, subscriptionId);
 
@@ -21,6 +17,7 @@ export const sendReminders = serve(async (context) => {
         return;
     }
 
+    console.log(REMINDER_DAYS_VALUES)
     for (const daysBefore of REMINDER_DAYS_VALUES) {
         const reminderDate = renewalDate.subtract(daysBefore, 'day');
 
@@ -30,7 +27,7 @@ export const sendReminders = serve(async (context) => {
 
         await triggerReminder(context, `Reminder ${daysBefore} days before`);
     }
-});
+};
 
 const fetchSubscription = async (context, subscriptionId) => {
     return await context.run('get subscription', async () => {

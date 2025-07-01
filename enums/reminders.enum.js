@@ -1,8 +1,8 @@
 export const REMINDER_DAYS = {
-    ONE_DAY_BEFORE: 1,
-    TWO_DAYS_BEFORE: 2,
+    ONE_WEEK_BEFORE: 7,
     FIVE_DAYS_BEFORE: 5,
-    ONE_WEEK_BEFORE: 7
+    TWO_DAYS_BEFORE: 2,
+    ONE_DAY_BEFORE: 1
 };
 
 export const REMINDER_DAYS_VALUES = Object.values(REMINDER_DAYS);

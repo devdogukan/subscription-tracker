@@ -43,8 +43,21 @@ export const deleteSubscription = (req, res, next) => {
 
 }
 
-export const getAllUserSubscriptions = (req, res, next) => {
+export const getAllUserSubscriptions = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const requestingUserId = req.params.id;
+        
+        const userSubscriptions = await subscriptionService.getAllUserSubscriptions(userId, requestingUserId);
 
+        res.status(200).json({
+            success: true,
+            message: 'Subscription retrieved successfully',
+            data: userSubscriptions
+        });
+    } catch (error) {
+        next(error);
+    }
 }
 
 export const cancelSubscription = (req, res, next) => {

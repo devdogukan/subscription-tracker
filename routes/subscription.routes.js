@@ -11,7 +11,7 @@ subscriptionRouter.get('/:id', subscriptionController.getSubscription);
 subscriptionRouter.post('/', subscriptionController.createSubscription);
 subscriptionRouter.put('/:id', subscriptionController.updateSubscription);
 subscriptionRouter.delete('/:id', subscriptionController.deleteSubscription);
-subscriptionRouter.get('/user/:id', subscriptionController.getAllSubscriptions);
+subscriptionRouter.get('/user/:id', subscriptionController.getAllUserSubscriptions);
 subscriptionRouter.put('/:id/cancel', subscriptionController.cancelSubscription);
 subscriptionRouter.get('/upcoming-renewals', subscriptionController.getAllUpcomingRenewalSubscriptions);
 

@@ -10,7 +10,7 @@ import subscriptionRouter from './routes/subscription.routes.js';
 import connectToDatabase from './database/mongodb.js';
 
 import errorMiddleware from './middlewares/error.middleware.js';
-import authenticateTokenMiddleware from './middlewares/auth.middleware.js';
+import arcjetMiddleware from './middlewares/arcject.middleware.js';
 
 import { startTokenCleanupJob } from './utils/cleanup.utils.js';
 
@@ -19,6 +19,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser())
+app.use(arcjetMiddleware);
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);

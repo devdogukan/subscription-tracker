@@ -1,3 +1,5 @@
+import { NODE_ENV } from "../config/env.js";
+
 const errorMiddleware = (err, req, res, next) => {
     try {
         let error = { ...err };
@@ -29,7 +31,7 @@ const errorMiddleware = (err, req, res, next) => {
         res.status(error.statusCode).json({
             success: false,
             error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+            stack: NODE_ENV === 'development' ? err.stack : undefined
         });
 
     } catch (error) {

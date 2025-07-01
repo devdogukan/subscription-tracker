@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import { workflowClient } from '../config/upstash.js';
-import { SERVER_URL } from '../config/env.js';
+import { triggerSubscriptionReminderWorkflow } from './workflow/workflow-client.service.js';
 import * as subscriptionRepository from '../repositories/subscription.repository.js';
 
 export const createSubscription = async (subscriptionData, userId) => {
@@ -15,16 +14,7 @@ export const createSubscription = async (subscriptionData, userId) => {
 
         const newSubscription = await subscriptionRepository.createSubscription(subscriptionWithUser, session);
 
-        const { workflowRunId } = await workflowClient.trigger({
-            url: `${SERVER_URL}/api/v1/workflows/subscription/reminder`,
-            body: {
-                subscriptionId: newSubscription.id,
-            },
-            headers: {
-                "content-type": "application/json"
-            },
-            retries: 0
-        });
+        const { workflowRunId } = await triggerSubscriptionReminderWorkflow(newSubscription.id);
 
         await session.commitTransaction();
         session.endSession();
